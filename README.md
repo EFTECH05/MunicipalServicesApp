@@ -321,8 +321,4 @@ Before submission, test:
 https://github.com/user-attachments/assets/990745d2-8976-423b-8ef9-728a4eab384f
 
 
-The Part 1 submission should include:
-
-1. The Word document containing the research.
-2. The complete source code.
-3. This README file explaining how to compile, run and use the application.
+The Part 1 submission 
