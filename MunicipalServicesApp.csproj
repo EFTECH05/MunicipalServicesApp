@@ -66,8 +66,28 @@
     <Compile Include="CreateAdminForm.Designer.cs">
       <DependentUpon>CreateAdminForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="CreateEventForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CreateEventForm.Designer.cs">
+      <DependentUpon>CreateEventForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Event.cs" />
+    <Compile Include="EventEditForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EventEditForm.Designer.cs">
+      <DependentUpon>EventEditForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EventManager.cs" />
     <Compile Include="Issue.cs" />
     <Compile Include="IssueStore.cs" />
+    <Compile Include="LocalEventsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LocalEventsForm.Designer.cs">
+      <DependentUpon>LocalEventsForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="LoginForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -120,6 +140,15 @@
     </EmbeddedResource>
     <EmbeddedResource Include="CreateAdminForm.resx">
       <DependentUpon>CreateAdminForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CreateEventForm.resx">
+      <DependentUpon>CreateEventForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EventEditForm.resx">
+      <DependentUpon>EventEditForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalEventsForm.resx">
+      <DependentUpon>LocalEventsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="LoginForm.resx">
       <DependentUpon>LoginForm.cs</DependentUpon>

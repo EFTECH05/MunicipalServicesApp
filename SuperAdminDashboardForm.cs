@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Windows.Forms;
 
 namespace MunicipalServicesApp
@@ -8,6 +9,15 @@ namespace MunicipalServicesApp
         public SuperAdminDashboardForm()
         {
             InitializeComponent();
+
+            // Configure the existing Create Event button.
+            // The button must already exist in the Designer.
+            btnCreateEvent.Text = "MANAGE EVENTS";
+            btnCreateEvent.Enabled = true;
+
+            // Prevent the same click handler from being registered twice.
+            btnCreateEvent.Click -= btnCreateEvent_Click;
+            btnCreateEvent.Click += btnCreateEvent_Click;
         }
 
         // ==========================================
@@ -17,8 +27,7 @@ namespace MunicipalServicesApp
             object sender,
             EventArgs e)
         {
-            lblWelcome.Text =
-                "Welcome, Super Administrator";
+            lblWelcome.Text = "Welcome, Super Administrator";
         }
 
         // ==========================================
@@ -28,21 +37,33 @@ namespace MunicipalServicesApp
             object sender,
             EventArgs e)
         {
-            CreateAdminForm createAdminForm =
-                new CreateAdminForm();
+            using (CreateAdminForm createAdminForm =
+                new CreateAdminForm())
+            {
+                createAdminForm.ShowDialog(this);
+            }
 
-            createAdminForm.ShowDialog();
-
-            // Reload accounts after creating
-            // an administrator.
             try
             {
                 AccountStore.LoadAccounts();
             }
             catch
             {
-                // CreateAdminForm already handles
-                // database errors.
+                // Preserve existing error handling.
+            }
+        }
+
+        // ==========================================
+        // MANAGE EVENTS AND ANNOUNCEMENTS
+        // ==========================================
+        private void btnCreateEvent_Click(
+            object sender,
+            EventArgs e)
+        {
+            using (LocalEventsForm eventsForm =
+                new LocalEventsForm(true))
+            {
+                eventsForm.ShowDialog(this);
             }
         }
 
@@ -54,11 +75,12 @@ namespace MunicipalServicesApp
             EventArgs e)
         {
             MessageBox.Show(
-                "The Manage Administrators section will allow the Super Administrator to view, edit and manage administrator accounts.",
+                "The Manage Administrators section will allow " +
+                "the Super Administrator to view, edit and manage " +
+                "administrator accounts.",
                 "Manage Administrators",
                 MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
+                MessageBoxIcon.Information);
         }
 
         // ==========================================
@@ -68,21 +90,19 @@ namespace MunicipalServicesApp
             object sender,
             EventArgs e)
         {
-            ViewCitizensForm viewCitizensForm =
-                new ViewCitizensForm();
+            using (ViewCitizensForm viewCitizensForm =
+                new ViewCitizensForm())
+            {
+                viewCitizensForm.ShowDialog(this);
+            }
 
-            viewCitizensForm.ShowDialog();
-
-            // Reload accounts when returning
-            // from the citizens screen.
             try
             {
                 AccountStore.LoadAccounts();
             }
             catch
             {
-                // ViewCitizensForm already handles
-                // database errors.
+                // Preserve existing error handling.
             }
         }
 
@@ -93,21 +113,19 @@ namespace MunicipalServicesApp
             object sender,
             EventArgs e)
         {
-            ViewAccountsForm viewAccountsForm =
-                new ViewAccountsForm();
+            using (ViewAccountsForm viewAccountsForm =
+                new ViewAccountsForm())
+            {
+                viewAccountsForm.ShowDialog(this);
+            }
 
-            viewAccountsForm.ShowDialog();
-
-            // Reload accounts when returning
-            // from the accounts screen.
             try
             {
                 AccountStore.LoadAccounts();
             }
             catch
             {
-                // ViewAccountsForm already handles
-                // database errors.
+                // Preserve existing error handling.
             }
         }
 
@@ -118,21 +136,16 @@ namespace MunicipalServicesApp
             object sender,
             EventArgs e)
         {
-            DialogResult result =
-                MessageBox.Show(
-                    "Are you sure you want to log out?",
-                    "Confirm Logout",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question
-                );
+            DialogResult result = MessageBox.Show(
+                "Are you sure you want to log out?",
+                "Confirm Logout",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
-                LoginForm loginForm =
-                    new LoginForm();
-
+                LoginForm loginForm = new LoginForm();
                 loginForm.Show();
-
                 this.Close();
             }
         }
@@ -144,7 +157,6 @@ namespace MunicipalServicesApp
             object sender,
             EventArgs e)
         {
-
         }
 
         // ==========================================
@@ -154,7 +166,15 @@ namespace MunicipalServicesApp
             object sender,
             PaintEventArgs e)
         {
+        }
 
+        // ==========================================
+        // SCROLL PANEL PAINT
+        // ==========================================
+        private void pnlScroll_Paint(
+            object sender,
+            PaintEventArgs e)
+        {
         }
     }
 }
