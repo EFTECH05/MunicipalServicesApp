@@ -14,29 +14,92 @@ namespace MunicipalServicesApp
             @"Initial Catalog=MunicipalServicesDB;" +
             @"Integrated Security=True";
 
+        // Events grouped by date.
         private readonly SortedDictionary<DateTime, List<Event>> eventsByDate =
             new SortedDictionary<DateTime, List<Event>>();
 
+        // Fast lookup of events by ID.
         private readonly Dictionary<int, Event> eventsById =
             new Dictionary<int, Event>();
 
+        // Unique event categories.
         private readonly HashSet<string> categories =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        // Recent searches, newest first.
         private readonly Stack<string> recentSearches =
             new Stack<string>();
 
+        // Searches waiting to be processed.
         private readonly Queue<string> searchQueue =
             new Queue<string>();
 
+        // Upcoming events organised by date.
         private readonly SortedDictionary<DateTime, Queue<Event>> priorityQueue =
             new SortedDictionary<DateTime, Queue<Event>>();
 
+        // Number of searches for each category.
         private readonly Dictionary<string, int> categorySearchCounts =
             new Dictionary<string, int>(
                 StringComparer.OrdinalIgnoreCase);
 
-        // Load events from SQL Server into the existing data structures.
+        // Normal constructor for the application.
+        public EventManager()
+        {
+        }
+
+        // Constructor for unit testing with sample events.
+        public EventManager(IEnumerable<Event> events)
+        {
+            if (events == null)
+            {
+                throw new ArgumentNullException(nameof(events));
+            }
+
+            foreach (Event ev in events)
+            {
+                if (ev == null)
+                {
+                    throw new ArgumentException(
+                        "The event collection cannot contain null events.",
+                        nameof(events));
+                }
+
+                AddEventToCollections(ev);
+            }
+        }
+
+        // Add an event to the in-memory collections.
+        private void AddEventToCollections(Event ev)
+        {
+            eventsById[ev.Id] = ev;
+
+            if (!string.IsNullOrWhiteSpace(ev.Category))
+            {
+                categories.Add(ev.Category.Trim());
+            }
+
+            if (!eventsByDate.ContainsKey(ev.EventDate))
+            {
+                eventsByDate[ev.EventDate] = new List<Event>();
+            }
+
+            eventsByDate[ev.EventDate].Add(ev);
+
+            if (ev.EventDate >= DateTime.Now)
+            {
+                if (!priorityQueue.ContainsKey(ev.EventDate))
+                {
+                    priorityQueue[ev.EventDate] = new Queue<Event>();
+                }
+
+                priorityQueue[ev.EventDate].Enqueue(ev);
+            }
+        }
+
+        // ---------------------------------------------------------
+        // LOAD EVENTS FROM SQL SERVER
+        // ---------------------------------------------------------
         public void LoadEvents()
         {
             List<Event> loadedEvents = new List<Event>();
@@ -65,17 +128,20 @@ namespace MunicipalServicesApp
                             EventDate = Convert.ToDateTime(reader["EventDate"]),
                             Location = Convert.ToString(reader["Location"]),
 
-                            Description = reader["Description"] == DBNull.Value
-                                ? string.Empty
-                                : Convert.ToString(reader["Description"]),
+                            Description =
+                                reader["Description"] == DBNull.Value
+                                    ? string.Empty
+                                    : Convert.ToString(reader["Description"]),
 
-                            EventType = reader["EventType"] == DBNull.Value
-                                ? "Event"
-                                : Convert.ToString(reader["EventType"]),
+                            EventType =
+                                reader["EventType"] == DBNull.Value
+                                    ? "Event"
+                                    : Convert.ToString(reader["EventType"]),
 
-                            CreatedAt = reader["CreatedAt"] == DBNull.Value
-                                ? DateTime.MinValue
-                                : Convert.ToDateTime(reader["CreatedAt"])
+                            CreatedAt =
+                                reader["CreatedAt"] == DBNull.Value
+                                    ? DateTime.MinValue
+                                    : Convert.ToDateTime(reader["CreatedAt"])
                         };
 
                         loadedEvents.Add(ev);
@@ -83,7 +149,7 @@ namespace MunicipalServicesApp
                 }
             }
 
-            // Clear existing in-memory event data after loading succeeds.
+            // Clear the event collections only after a successful load.
             eventsByDate.Clear();
             eventsById.Clear();
             categories.Clear();
@@ -91,34 +157,23 @@ namespace MunicipalServicesApp
 
             foreach (Event ev in loadedEvents)
             {
-                eventsById[ev.Id] = ev;
-
-                if (!string.IsNullOrWhiteSpace(ev.Category))
-                {
-                    categories.Add(ev.Category);
-                }
-
-                if (!eventsByDate.ContainsKey(ev.EventDate))
-                {
-                    eventsByDate[ev.EventDate] = new List<Event>();
-                }
-
-                eventsByDate[ev.EventDate].Add(ev);
-
-                if (ev.EventDate >= DateTime.Now)
-                {
-                    if (!priorityQueue.ContainsKey(ev.EventDate))
-                    {
-                        priorityQueue[ev.EventDate] =
-                            new Queue<Event>();
-                    }
-
-                    priorityQueue[ev.EventDate].Enqueue(ev);
-                }
+                AddEventToCollections(ev);
             }
         }
 
-        // Search events by category and optional date range.
+        // ---------------------------------------------------------
+        // GET CATEGORIES
+        // ---------------------------------------------------------
+        public List<string> GetCategories()
+        {
+            return categories
+                .OrderBy(category => category)
+                .ToList();
+        }
+
+        // ---------------------------------------------------------
+        // SEARCH EVENTS BY CATEGORY AND DATE
+        // ---------------------------------------------------------
         public List<Event> SearchEvents(
             string category,
             DateTime? startDate,
@@ -143,7 +198,7 @@ namespace MunicipalServicesApp
                         : "Any end date");
             }
 
-            RecordSearch(searchDescription);
+            RecordSearch(searchDescription, selectedCategory);
 
             IEnumerable<Event> results = eventsById.Values;
 
@@ -175,24 +230,29 @@ namespace MunicipalServicesApp
                 .ToList();
         }
 
-        // Record searches without replacing the readonly Stack.
-        private void RecordSearch(string searchDescription)
+        // ---------------------------------------------------------
+        // RECORD SEARCH HISTORY AND CATEGORY PREFERENCES
+        // ---------------------------------------------------------
+        private void RecordSearch(
+            string searchDescription,
+            string selectedCategory)
         {
             if (string.IsNullOrWhiteSpace(searchDescription))
+            {
                 return;
+            }
 
             searchQueue.Enqueue(searchDescription);
 
-            // Keep a maximum of 20 pending search descriptions.
+            // Keep no more than 20 queued searches.
             while (searchQueue.Count > 20)
             {
                 searchQueue.Dequeue();
             }
 
-            // Build an updated list of recent searches.
             List<string> items = recentSearches.ToList();
 
-            // Remove duplicates so the latest search appears first.
+            // Keep searches unique in recent history.
             items.RemoveAll(item =>
                 string.Equals(
                     item,
@@ -201,13 +261,10 @@ namespace MunicipalServicesApp
 
             items.Insert(0, searchDescription);
 
-            // Keep only the ten most recent searches.
             List<string> limitedItems = items
                 .Take(10)
                 .ToList();
 
-            // Stack enumeration returns newest-first.
-            // Clear and repopulate the same readonly Stack instance.
             recentSearches.Clear();
 
             foreach (string item in limitedItems.AsEnumerable().Reverse())
@@ -215,46 +272,66 @@ namespace MunicipalServicesApp
                 recentSearches.Push(item);
             }
 
-            if (!categorySearchCounts.ContainsKey(searchDescription))
+            // Count only searches for a specific category.
+            if (!string.IsNullOrWhiteSpace(selectedCategory) &&
+                !selectedCategory.Equals(
+                    "All Categories",
+                    StringComparison.OrdinalIgnoreCase))
             {
-                categorySearchCounts[searchDescription] = 0;
-            }
+                if (!categorySearchCounts.ContainsKey(selectedCategory))
+                {
+                    categorySearchCounts[selectedCategory] = 0;
+                }
 
-            categorySearchCounts[searchDescription]++;
+                categorySearchCounts[selectedCategory]++;
+            }
         }
 
-        // Recommend upcoming events based on search activity.
+        // ---------------------------------------------------------
+        // GET RECOMMENDED UPCOMING EVENTS
+        // ---------------------------------------------------------
         public List<Event> GetRecommendedEvents(int count)
         {
             if (count <= 0)
+            {
                 return new List<Event>();
+            }
 
-            HashSet<string> preferredCategories =
-                categorySearchCounts
-                    .OrderByDescending(pair => pair.Value)
-                    .Take(5)
-                    .Select(pair => pair.Key)
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            DateTime now = DateTime.Now;
 
             IEnumerable<Event> upcoming = eventsById.Values
-                .Where(ev => ev.EventDate >= DateTime.Now)
-                .OrderBy(ev => ev.EventDate);
+                .Where(ev => ev.EventDate >= now);
 
-            List<Event> preferred = upcoming
-                .Where(ev => preferredCategories.Contains(ev.Category))
-                .ToList();
-
-            List<Event> otherUpcoming = upcoming
-                .Where(ev => !preferredCategories.Contains(ev.Category))
-                .ToList();
-
-            return preferred
-                .Concat(otherUpcoming)
+            return upcoming
+                .OrderByDescending(ev =>
+                    GetCategorySearchCount(ev.Category))
+                .ThenBy(ev => ev.EventDate)
                 .Take(count)
                 .ToList();
         }
 
-        // Return category search counts.
+        private int GetCategorySearchCount(string category)
+        {
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                return 0;
+            }
+
+            int searchCount;
+
+            if (categorySearchCounts.TryGetValue(
+                category,
+                out searchCount))
+            {
+                return searchCount;
+            }
+
+            return 0;
+        }
+
+        // ---------------------------------------------------------
+        // GET CATEGORY SEARCH COUNTS
+        // ---------------------------------------------------------
         public Dictionary<string, int> GetCategorySearchCounts()
         {
             return new Dictionary<string, int>(
@@ -262,18 +339,29 @@ namespace MunicipalServicesApp
                 StringComparer.OrdinalIgnoreCase);
         }
 
-        // Return the next upcoming event.
+        // ---------------------------------------------------------
+        // GET THE NEXT UPCOMING EVENT
+        // ---------------------------------------------------------
         public Event GetNextUpcomingEvent()
         {
+            DateTime now = DateTime.Now;
+
             foreach (KeyValuePair<DateTime, Queue<Event>> entry
                 in priorityQueue)
             {
+                if (entry.Key < now)
+                {
+                    continue;
+                }
+
                 while (entry.Value.Count > 0)
                 {
                     Event ev = entry.Value.Peek();
 
-                    if (ev.EventDate >= DateTime.Now)
+                    if (ev.EventDate >= now)
+                    {
                         return ev;
+                    }
 
                     entry.Value.Dequeue();
                 }
@@ -282,25 +370,37 @@ namespace MunicipalServicesApp
             return null;
         }
 
-        // Return recent searches, newest first.
+        // ---------------------------------------------------------
+        // GET RECENT SEARCHES
+        // ---------------------------------------------------------
         public List<string> GetRecentSearches(int count)
         {
             if (count <= 0)
+            {
                 return new List<string>();
+            }
 
-            return recentSearches.Take(count).ToList();
+            return recentSearches
+                .Take(count)
+                .ToList();
         }
 
-        // Process the next queued search.
+        // ---------------------------------------------------------
+        // PROCESS NEXT QUEUED SEARCH
+        // ---------------------------------------------------------
         public string ProcessNextSearch()
         {
             if (searchQueue.Count == 0)
+            {
                 return null;
+            }
 
             return searchQueue.Dequeue();
         }
 
-        // Filter events without recording another search.
+        // ---------------------------------------------------------
+        // FILTER EVENTS WITHOUT RECORDING A SEARCH
+        // ---------------------------------------------------------
         public List<Event> FilterEventsWithoutRecording(
             string category,
             DateTime? startDate,
@@ -316,7 +416,7 @@ namespace MunicipalServicesApp
                 results = results.Where(ev =>
                     string.Equals(
                         ev.Category,
-                        category,
+                        category.Trim(),
                         StringComparison.OrdinalIgnoreCase));
             }
 
@@ -337,11 +437,15 @@ namespace MunicipalServicesApp
                 .ToList();
         }
 
-        // Update an existing event or announcement in SQL Server.
+        // ---------------------------------------------------------
+        // UPDATE AN EXISTING EVENT
+        // ---------------------------------------------------------
         public void UpdateEvent(Event ev)
         {
             if (ev == null)
+            {
                 throw new ArgumentNullException(nameof(ev));
+            }
 
             using (SqlConnection connection =
                 new SqlConnection(connectionString))
@@ -398,11 +502,12 @@ namespace MunicipalServicesApp
                 }
             }
 
-            // Refresh the in-memory collections after a successful update.
             LoadEvents();
         }
 
-        // Delete an event or announcement from SQL Server.
+        // ---------------------------------------------------------
+        // DELETE AN EVENT
+        // ---------------------------------------------------------
         public void DeleteEvent(int eventId)
         {
             using (SqlConnection connection =
@@ -429,7 +534,6 @@ namespace MunicipalServicesApp
                 }
             }
 
-            // Refresh the in-memory collections after deletion.
             LoadEvents();
         }
     }
