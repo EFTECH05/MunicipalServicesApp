@@ -366,6 +366,9 @@ Display upcoming municipal events.
 Search for events by category.
 <img width="1346" height="734" alt="image" src="https://github.com/user-attachments/assets/958ce0eb-d1a5-4024-8ef3-391a9edcfbf3" />
 
+<img width="1063" height="302" alt="image" src="https://github.com/user-attachments/assets/e65b7880-1e39-49e1-aeb1-68a96ade72b3" />
+<img width="680" height="278" alt="image" src="https://github.com/user-attachments/assets/e73c06c2-7d71-4d11-bed8-69e11e2f8cbc" />
+
 Filter events using a selected date range.
 
 View event details.
