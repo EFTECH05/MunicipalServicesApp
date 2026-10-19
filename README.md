@@ -517,6 +517,7 @@ EventEditForm.cs — provides the interface for editing events.
 The exact file structure may vary depending on the latest version of the project.
 
 10. Testing
+<img width="1209" height="500" alt="image" src="https://github.com/user-attachments/assets/82e97bac-2357-486d-a7d9-244f2ea13df8" />
 
 I recommend testing the following functionality before submitting the project:
 
