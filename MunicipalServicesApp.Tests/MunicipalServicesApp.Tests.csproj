@@ -24,7 +24,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\MunicipalServicesApp\MunicipalServicesApp.csproj" />
+	  <ProjectReference Include="..\MunicipalServicesApp.csproj" />
 	</ItemGroup>
 
 </Project>
+
