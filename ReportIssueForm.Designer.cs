@@ -57,6 +57,7 @@
             this.pnlScroll.Name = "pnlScroll";
             this.pnlScroll.Size = new System.Drawing.Size(900, 700);
             this.pnlScroll.TabIndex = 0;
+            this.pnlScroll.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlScroll_Paint);
             // 
             // pnlMain
             // 

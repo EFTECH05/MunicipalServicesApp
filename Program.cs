@@ -1,13 +1,12 @@
-﻿using System;
+﻿
+using System;
+using System.IO;
 using System.Windows.Forms;
 
 namespace MunicipalServicesApp
 {
     internal static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
@@ -16,18 +15,31 @@ namespace MunicipalServicesApp
 
             try
             {
-                // Load accounts from SQL Server into List<Account>
                 AccountStore.LoadAccounts();
 
-                // Open the Login screen
                 Application.Run(new LoginForm());
             }
             catch (Exception ex)
             {
+                string errorDetails =
+                    "Application startup failed.\n\n" +
+                    ex.ToString();
+
+                try
+                {
+                    File.WriteAllText(
+                        "startup-error.txt",
+                        errorDetails
+                    );
+                }
+                catch
+                {
+                    // Keep the error message available even if logging fails.
+                }
+
                 MessageBox.Show(
-                    "The application could not connect to the database.\n\n" +
-                    ex.Message,
-                    "Database Connection Error",
+                    errorDetails,
+                    "Application Startup Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );

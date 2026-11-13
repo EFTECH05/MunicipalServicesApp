@@ -51,6 +51,9 @@ namespace MunicipalServicesApp
             BuildEventsInterface();
         }
 
+        // ---------------------------------------------------------
+        // BUILD THE USER INTERFACE
+        // ---------------------------------------------------------
         private void BuildEventsInterface()
         {
             SuspendLayout();
@@ -97,6 +100,9 @@ namespace MunicipalServicesApp
             header.Controls.Add(lblTitle);
             header.Controls.Add(lblSubtitle);
 
+            // -----------------------------------------------------
+            // SEARCH FILTERS
+            // -----------------------------------------------------
             Panel filters = new Panel
             {
                 Dock = DockStyle.Top,
@@ -202,7 +208,9 @@ namespace MunicipalServicesApp
             filters.Controls.Add(btnReset);
             filters.Controls.Add(btnRefresh);
 
-            // Only show event-management buttons to administrators.
+            // -----------------------------------------------------
+            // ADMINISTRATOR BUTTONS
+            // -----------------------------------------------------
             btnAdminCreateEvent = new Button
             {
                 Text = "CREATE EVENT",
@@ -244,6 +252,9 @@ namespace MunicipalServicesApp
             filters.Controls.Add(btnEditEvent);
             filters.Controls.Add(btnDeleteEvent);
 
+            // -----------------------------------------------------
+            // MAIN CONTENT
+            // -----------------------------------------------------
             Panel content = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -281,8 +292,10 @@ namespace MunicipalServicesApp
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AutoGenerateColumns = false,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                AutoSizeColumnsMode =
+                    DataGridViewAutoSizeColumnsMode.Fill,
+                SelectionMode =
+                    DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 RowHeadersVisible = false,
                 BackgroundColor = Color.White,
@@ -351,6 +364,9 @@ namespace MunicipalServicesApp
             lblEventsTitle.BringToFront();
             lblEventCount.BringToFront();
 
+            // -----------------------------------------------------
+            // RECOMMENDATIONS AND SEARCH HISTORY
+            // -----------------------------------------------------
             Panel sidePanel = new Panel
             {
                 Dock = DockStyle.Right,
@@ -399,11 +415,13 @@ namespace MunicipalServicesApp
 
             sidePanel.Controls.Add(historyGroup);
             sidePanel.Controls.Add(recommendationsGroup);
-            recommendationsGroup.BringToFront();
 
             content.Controls.Add(eventsPanel);
             content.Controls.Add(sidePanel);
 
+            // -----------------------------------------------------
+            // FOOTER
+            // -----------------------------------------------------
             Panel footer = new Panel
             {
                 Dock = DockStyle.Bottom,
@@ -429,6 +447,9 @@ namespace MunicipalServicesApp
             ResumeLayout(true);
         }
 
+        // ---------------------------------------------------------
+        // LOAD EVENTS
+        // ---------------------------------------------------------
         private void LocalEventsForm_Load(object sender, EventArgs e)
         {
             LoadEventsFromDatabase();
@@ -442,10 +463,12 @@ namespace MunicipalServicesApp
 
                 PopulateCategories();
 
+                // Display upcoming events by default.
+                // Do not record a search during initial loading.
                 DisplayEvents(
-                    eventManager.SearchEvents(
+                    eventManager.FilterEventsWithoutRecording(
                         "All Categories",
-                        null,
+                        DateTime.Now,
                         null));
 
                 LoadRecommendations();
@@ -467,36 +490,48 @@ namespace MunicipalServicesApp
             }
         }
 
+        // ---------------------------------------------------------
+        // POPULATE CATEGORY DROPDOWN
+        // ---------------------------------------------------------
         private void PopulateCategories()
         {
             string selectedCategory = "All Categories";
 
             if (cmbCategory.SelectedItem != null)
             {
-                selectedCategory = cmbCategory.SelectedItem.ToString();
+                selectedCategory =
+                    cmbCategory.SelectedItem.ToString();
             }
 
-            cmbCategory.Items.Clear();
-            cmbCategory.Items.Add("All Categories");
+            cmbCategory.BeginUpdate();
 
-            List<Event> allEvents =
-                eventManager.SearchEvents("All Categories", null, null);
-
-            foreach (string category in allEvents
-                .Where(ev => !string.IsNullOrWhiteSpace(ev.Category))
-                .Select(ev => ev.Category)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(category => category))
+            try
             {
-                cmbCategory.Items.Add(category);
-            }
+                cmbCategory.Items.Clear();
+                cmbCategory.Items.Add("All Categories");
 
-            cmbCategory.SelectedItem =
-                cmbCategory.Items.Contains(selectedCategory)
-                    ? selectedCategory
-                    : "All Categories";
+                // Use the existing HashSet-backed category collection.
+                // This does not record a search.
+                foreach (string category in eventManager.GetCategories())
+                {
+                    cmbCategory.Items.Add(category);
+                }
+
+                int selectedIndex =
+                    cmbCategory.Items.IndexOf(selectedCategory);
+
+                cmbCategory.SelectedIndex =
+                    selectedIndex >= 0 ? selectedIndex : 0;
+            }
+            finally
+            {
+                cmbCategory.EndUpdate();
+            }
         }
 
+        // ---------------------------------------------------------
+        // SEARCH EVENTS
+        // ---------------------------------------------------------
         private void btnSearch_Click(object sender, EventArgs e)
         {
             try
@@ -513,20 +548,26 @@ namespace MunicipalServicesApp
                             "Invalid Date Range",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Warning);
+
                         return;
                     }
 
                     startDate = dtpStartDate.Value.Date;
+
+                    // Include the entire selected end date.
                     endDate = dtpEndDate.Value.Date
-                        .AddDays(1).AddTicks(-1);
+                        .AddDays(1)
+                        .AddTicks(-1);
                 }
 
                 string category = cmbCategory.SelectedItem == null
                     ? "All Categories"
                     : cmbCategory.SelectedItem.ToString();
 
-                List<Event> results =
-                    eventManager.SearchEvents(category, startDate, endDate);
+                List<Event> results = eventManager.SearchEvents(
+                    category,
+                    startDate,
+                    endDate);
 
                 DisplayEvents(results);
                 LoadRecommendations();
@@ -544,20 +585,33 @@ namespace MunicipalServicesApp
             }
         }
 
+        // ---------------------------------------------------------
+        // RESET FILTERS
+        // ---------------------------------------------------------
         private void btnReset_Click(object sender, EventArgs e)
         {
-            cmbCategory.SelectedItem = "All Categories";
+            cmbCategory.SelectedIndex = 0;
+
             chkUseDateRange.Checked = false;
+
             dtpStartDate.Value = DateTime.Today;
             dtpEndDate.Value = DateTime.Today.AddDays(30);
 
             try
             {
-                DisplayEvents(
-                    eventManager.SearchEvents("All Categories", null, null));
+                // Restore the default upcoming-events view without
+                // recording another search.
+                List<Event> upcomingEvents =
+                    eventManager.FilterEventsWithoutRecording(
+                        "All Categories",
+                        DateTime.Now,
+                        null);
+
+                DisplayEvents(upcomingEvents);
 
                 LoadRecommendations();
                 LoadRecentSearches();
+
                 lblStatus.Text = "Filters have been reset.";
             }
             catch (Exception ex)
@@ -570,33 +624,49 @@ namespace MunicipalServicesApp
             }
         }
 
+        // ---------------------------------------------------------
+        // REFRESH EVENTS
+        // ---------------------------------------------------------
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             LoadEventsFromDatabase();
         }
 
-        private void chkUseDateRange_CheckedChanged(object sender, EventArgs e)
+        // ---------------------------------------------------------
+        // DATE FILTER ENABLE/DISABLE
+        // ---------------------------------------------------------
+        private void chkUseDateRange_CheckedChanged(
+            object sender,
+            EventArgs e)
         {
             dtpStartDate.Enabled = chkUseDateRange.Checked;
             dtpEndDate.Enabled = chkUseDateRange.Checked;
         }
 
+        // ---------------------------------------------------------
+        // DISPLAY EVENTS
+        // ---------------------------------------------------------
         private void DisplayEvents(List<Event> events)
         {
-            dgvEvents.DataSource = null;
-            dgvEvents.DataSource = events
+            List<Event> orderedEvents = events
                 .OrderBy(ev => ev.EventDate)
                 .ToList();
 
-            lblEventCount.Text = "Events: " + events.Count;
+            dgvEvents.DataSource = null;
+            dgvEvents.DataSource = orderedEvents;
 
-            if (events.Count == 0)
+            lblEventCount.Text = "Events: " + orderedEvents.Count;
+
+            if (orderedEvents.Count == 0)
             {
                 lblStatus.Text =
-                    "No events matched your search. Try another category or date range.";
+                    "No events found. Try another category or date range.";
             }
         }
 
+        // ---------------------------------------------------------
+        // DISPLAY RECOMMENDATIONS
+        // ---------------------------------------------------------
         private void LoadRecommendations()
         {
             lstRecommendations.Items.Clear();
@@ -607,8 +677,9 @@ namespace MunicipalServicesApp
             foreach (Event ev in recommendations)
             {
                 lstRecommendations.Items.Add(
-                    ev.EventDate.ToString("dd MMM") + " - " +
-                    ev.Title + " (" + ev.Category + ")");
+                    ev.EventDate.ToString("dd MMM") +
+                    " - " + ev.Title +
+                    " (" + ev.Category + ")");
             }
 
             if (recommendations.Count == 0)
@@ -618,11 +689,15 @@ namespace MunicipalServicesApp
             }
         }
 
+        // ---------------------------------------------------------
+        // DISPLAY RECENT SEARCHES
+        // ---------------------------------------------------------
         private void LoadRecentSearches()
         {
             lstRecentSearches.Items.Clear();
 
-            List<string> searches = eventManager.GetRecentSearches(10);
+            List<string> searches =
+                eventManager.GetRecentSearches(10);
 
             foreach (string search in searches)
             {
@@ -636,40 +711,62 @@ namespace MunicipalServicesApp
             }
         }
 
+        // ---------------------------------------------------------
+        // OPEN EVENT DETAILS FROM THE GRID
+        // ---------------------------------------------------------
         private void dgvEvents_CellDoubleClick(
-            object sender, DataGridViewCellEventArgs e)
+            object sender,
+            DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0 || e.RowIndex >= dgvEvents.Rows.Count)
+            if (e.RowIndex < 0 ||
+                e.RowIndex >= dgvEvents.Rows.Count)
+            {
                 return;
+            }
 
             Event selectedEvent =
                 dgvEvents.Rows[e.RowIndex].DataBoundItem as Event;
 
             if (selectedEvent != null)
+            {
                 ShowEventDetails(selectedEvent);
+            }
         }
 
-        private void lstRecommendations_DoubleClick(object sender, EventArgs e)
+        // ---------------------------------------------------------
+        // OPEN EVENT DETAILS FROM RECOMMENDATIONS
+        // ---------------------------------------------------------
+        private void lstRecommendations_DoubleClick(
+            object sender,
+            EventArgs e)
         {
             int selectedIndex = lstRecommendations.SelectedIndex;
 
             if (selectedIndex < 0)
+            {
                 return;
+            }
 
             List<Event> recommendations =
                 eventManager.GetRecommendedEvents(10);
 
             if (selectedIndex < recommendations.Count)
+            {
                 ShowEventDetails(recommendations[selectedIndex]);
+            }
         }
 
+        // ---------------------------------------------------------
+        // SHOW EVENT DETAILS
+        // ---------------------------------------------------------
         private void ShowEventDetails(Event ev)
         {
             MessageBox.Show(
                 "Title: " + ev.Title + "\n\n" +
                 "Category: " + ev.Category + "\n" +
                 "Type: " + ev.EventType + "\n" +
-                "Date: " + ev.EventDate.ToString("dd MMMM yyyy, HH:mm") + "\n" +
+                "Date: " +
+                    ev.EventDate.ToString("dd MMMM yyyy, HH:mm") + "\n" +
                 "Location: " + ev.Location + "\n\n" +
                 "Description:\n" + ev.Description,
                 "Event Details",
@@ -677,31 +774,49 @@ namespace MunicipalServicesApp
                 MessageBoxIcon.Information);
         }
 
+        // ---------------------------------------------------------
+        // GET SELECTED EVENT
+        // ---------------------------------------------------------
         private Event GetSelectedEvent()
         {
             if (dgvEvents.CurrentRow == null)
+            {
                 return null;
+            }
 
             return dgvEvents.CurrentRow.DataBoundItem as Event;
         }
 
-        private void btnAdminCreateEvent_Click(object sender, EventArgs e)
+        // ---------------------------------------------------------
+        // CREATE EVENT
+        // ---------------------------------------------------------
+        private void btnAdminCreateEvent_Click(
+            object sender,
+            EventArgs e)
         {
             if (!administratorMode)
+            {
                 return;
+            }
 
             using (CreateEventForm form = new CreateEventForm())
             {
                 form.ShowDialog(this);
             }
 
+            // Reload to include any newly created event.
             LoadEventsFromDatabase();
         }
 
+        // ---------------------------------------------------------
+        // EDIT EVENT
+        // ---------------------------------------------------------
         private void btnEditEvent_Click(object sender, EventArgs e)
         {
             if (!administratorMode)
+            {
                 return;
+            }
 
             Event selectedEvent = GetSelectedEvent();
 
@@ -712,16 +827,19 @@ namespace MunicipalServicesApp
                     "No Event Selected",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
+
                 return;
             }
 
-            using (EventEditForm form = new EventEditForm(selectedEvent))
+            using (EventEditForm form =
+                new EventEditForm(selectedEvent))
             {
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
                     try
                     {
                         eventManager.UpdateEvent(form.EditedEvent);
+
                         LoadEventsFromDatabase();
 
                         lblStatus.Text = "Event updated successfully.";
@@ -744,10 +862,15 @@ namespace MunicipalServicesApp
             }
         }
 
+        // ---------------------------------------------------------
+        // DELETE EVENT
+        // ---------------------------------------------------------
         private void btnDeleteEvent_Click(object sender, EventArgs e)
         {
             if (!administratorMode)
+            {
                 return;
+            }
 
             Event selectedEvent = GetSelectedEvent();
 
@@ -758,24 +881,29 @@ namespace MunicipalServicesApp
                     "No Event Selected",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
+
                 return;
             }
 
             DialogResult result = MessageBox.Show(
                 "Are you sure you want to delete this event?\n\n" +
                 selectedEvent.Title + "\n" +
-                selectedEvent.EventDate.ToString("dd MMMM yyyy, HH:mm") +
+                selectedEvent.EventDate.ToString(
+                    "dd MMMM yyyy, HH:mm") +
                 "\n\nThis action cannot be undone.",
                 "Confirm Delete",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
 
             if (result != DialogResult.Yes)
+            {
                 return;
+            }
 
             try
             {
                 eventManager.DeleteEvent(selectedEvent.Id);
+
                 LoadEventsFromDatabase();
 
                 lblStatus.Text = "Event deleted successfully.";

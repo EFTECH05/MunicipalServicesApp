@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="../MunicipalServicesApp.Tests/MunicipalServicesApp.Tests.csproj" Id="d44dbf5e-b318-4142-9c18-094f8a5a13ad" />
   <Project Path="MunicipalServicesApp.csproj" Id="ee1ba3f9-5f99-4c79-b8e4-aff76576543c" />
 </Solution>

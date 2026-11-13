@@ -91,13 +91,17 @@ namespace MunicipalServicesApp
             int rowGap = 48;
 
             AddLabel(content, "Event title:", leftLabel, y);
-            txtTitle = AddTextBox(content, inputLeft, y - 4,
-                inputWidth, 28);
+            txtTitle = AddTextBox(
+                content, inputLeft, y - 4, inputWidth, 28);
             y += rowGap;
 
             AddLabel(content, "Category:", leftLabel, y);
-            cmbCategory = AddComboBox(content, inputLeft, y - 4,
-                inputWidth, new string[]
+            cmbCategory = AddComboBox(
+                content,
+                inputLeft,
+                y - 4,
+                inputWidth,
+                new string[]
                 {
                     "Community",
                     "Education",
@@ -108,6 +112,7 @@ namespace MunicipalServicesApp
                     "Water and Electricity",
                     "Other"
                 });
+
             cmbCategory.DropDownStyle = ComboBoxStyle.DropDown;
             y += rowGap;
 
@@ -135,18 +140,24 @@ namespace MunicipalServicesApp
             y += rowGap;
 
             AddLabel(content, "Location:", leftLabel, y);
-            txtLocation = AddTextBox(content, inputLeft, y - 4,
-                inputWidth, 28);
+            txtLocation = AddTextBox(
+                content, inputLeft, y - 4, inputWidth, 28);
             y += rowGap;
 
             AddLabel(content, "Type:", leftLabel, y);
-            cmbEventType = AddComboBox(content, inputLeft, y - 4,
-                inputWidth, new string[]
+            cmbEventType = AddComboBox(
+                content,
+                inputLeft,
+                y - 4,
+                inputWidth,
+                new string[]
                 {
                     "Event",
                     "Announcement"
                 });
-            cmbEventType.DropDownStyle = ComboBoxStyle.DropDownList;
+
+            cmbEventType.DropDownStyle =
+                ComboBoxStyle.DropDownList;
             cmbEventType.SelectedIndex = 0;
             y += rowGap;
 
@@ -171,6 +182,7 @@ namespace MunicipalServicesApp
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold)
             };
+
             btnSave.FlatAppearance.BorderSize = 0;
             btnSave.Click += btnSave_Click;
             content.Controls.Add(btnSave);
@@ -184,6 +196,7 @@ namespace MunicipalServicesApp
                 ForeColor = Color.FromArgb(35, 45, 60),
                 FlatStyle = FlatStyle.Flat
             };
+
             btnClear.Click += btnClear_Click;
             content.Controls.Add(btnClear);
 
@@ -196,6 +209,7 @@ namespace MunicipalServicesApp
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
             };
+
             btnCancel.Click += (sender, e) => Close();
             content.Controls.Add(btnCancel);
 
@@ -207,6 +221,7 @@ namespace MunicipalServicesApp
                 Text = "Complete the fields and publish your event.",
                 AutoSize = false
             };
+
             Controls.Add(lblStatus);
         }
 
@@ -314,8 +329,13 @@ namespace MunicipalServicesApp
                 return;
             }
 
+            // Prevent accidental duplicate submissions while saving
+            // and sending notifications.
+            btnSave.Enabled = false;
+
             try
             {
+                // STEP 1: Save the event to SQL Server.
                 using (SqlConnection connection =
                     new SqlConnection(connectionString))
                 {
@@ -331,35 +351,67 @@ namespace MunicipalServicesApp
                         new SqlCommand(query, connection))
                     {
                         command.Parameters.Add(
-                            "@Title", SqlDbType.NVarChar, 150).Value = title;
+                            "@Title", SqlDbType.NVarChar, 150)
+                            .Value = title;
 
                         command.Parameters.Add(
-                            "@Category", SqlDbType.NVarChar, 80).Value = category;
+                            "@Category", SqlDbType.NVarChar, 80)
+                            .Value = category;
 
                         command.Parameters.Add(
-                            "@EventDate", SqlDbType.DateTime).Value = eventDate;
+                            "@EventDate", SqlDbType.DateTime)
+                            .Value = eventDate;
 
                         command.Parameters.Add(
-                            "@Location", SqlDbType.NVarChar, 200).Value = location;
+                            "@Location", SqlDbType.NVarChar, 200)
+                            .Value = location;
 
                         command.Parameters.Add(
-                            "@Description", SqlDbType.NVarChar, 1000).Value = description;
+                            "@Description", SqlDbType.NVarChar, 1000)
+                            .Value = description;
 
                         command.Parameters.Add(
-                            "@EventType", SqlDbType.NVarChar, 30).Value = eventType;
+                            "@EventType", SqlDbType.NVarChar, 30)
+                            .Value = eventType;
 
                         connection.Open();
                         command.ExecuteNonQuery();
                     }
                 }
 
+                // STEP 2: The event is saved. Now notify active citizens.
+                string notificationResult;
+
+                try
+                {
+                    notificationResult =
+                        EmailService.NotifyActiveCitizensOfEvent(
+                            title,
+                            category,
+                            eventDate,
+                            location,
+                            description,
+                            eventType);
+                }
+                catch (Exception emailEx)
+                {
+                    // Do not report the event as unsaved if only
+                    // the email operation failed.
+                    notificationResult =
+                        "The event was saved successfully, but " +
+                        "the notification process failed.\r\n\r\n" +
+                        emailEx.Message;
+                }
+
+                lblStatus.Text =
+                    "Event saved. Notification process completed.";
+
                 MessageBox.Show(
-                    "The event or announcement has been published successfully.",
-                    "Published",
+                    notificationResult,
+                    "Event Publishing Results",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
 
-                lblStatus.Text = "Event published successfully.";
                 ClearFields();
             }
             catch (SqlException ex)
@@ -379,6 +431,13 @@ namespace MunicipalServicesApp
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+            finally
+            {
+                if (!IsDisposed)
+                {
+                    btnSave.Enabled = true;
+                }
+            }
         }
 
         private void btnClear_Click(object sender, EventArgs e)
@@ -397,6 +456,10 @@ namespace MunicipalServicesApp
             cmbEventType.SelectedIndex = 0;
             txtDescription.Clear();
             txtTitle.Focus();
+        }
+
+        private void CreateEventForm_Load(object sender, EventArgs e)
+        {
         }
     }
 }

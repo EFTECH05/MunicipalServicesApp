@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -8,17 +9,35 @@ namespace MunicipalServicesApp
     {
         private string selectedAttachment = "";
 
+        private Account currentUser;
+
         private static List<Issue> reportedIssues =
             new List<Issue>();
 
+        // ==========================================
+        // CONSTRUCTORS
+        // ==========================================
+
+        // Kept temporarily for compatibility with
+        // the existing MainMenuForm.
         public ReportIssueForm()
         {
             InitializeComponent();
         }
 
+        // Constructor for the logged-in account.
+        public ReportIssueForm(Account account)
+        {
+            InitializeComponent();
+
+            currentUser = account;
+        }
+
+
         // ==========================================
         // FORM LOAD
         // ==========================================
+
         private void ReportIssueForm_Load(
             object sender,
             EventArgs e)
@@ -32,9 +51,11 @@ namespace MunicipalServicesApp
             UpdateProgress();
         }
 
+
         // ==========================================
         // LOCATION CHANGED
         // ==========================================
+
         private void txtLocation_TextChanged(
             object sender,
             EventArgs e)
@@ -42,9 +63,11 @@ namespace MunicipalServicesApp
             UpdateProgress();
         }
 
+
         // ==========================================
         // CATEGORY CHANGED
         // ==========================================
+
         private void cmbCategory_SelectedIndexChanged(
             object sender,
             EventArgs e)
@@ -52,9 +75,11 @@ namespace MunicipalServicesApp
             UpdateProgress();
         }
 
+
         // ==========================================
         // DESCRIPTION CHANGED
         // ==========================================
+
         private void txtDescription_TextChanged(
             object sender,
             EventArgs e)
@@ -62,9 +87,11 @@ namespace MunicipalServicesApp
             UpdateProgress();
         }
 
+
         // ==========================================
         // ATTACHMENT
         // ==========================================
+
         private void btnAttachment_Click(
             object sender,
             EventArgs e)
@@ -95,22 +122,51 @@ namespace MunicipalServicesApp
 
                     lblAttachmentName.ForeColor =
                         System.Drawing.Color.FromArgb(
-                            0,
-                            130,
-                            65);
+                            0, 130, 65);
 
                     UpdateProgress();
                 }
             }
         }
 
+
         // ==========================================
-        // SUBMIT ISSUE
+        // SUBMIT SERVICE REQUEST
         // ==========================================
+
         private void btnSubmit_Click(
             object sender,
             EventArgs e)
         {
+            // --------------------------------------
+            // CHECK LOGGED-IN ACCOUNT
+            // --------------------------------------
+
+            if (currentUser == null)
+            {
+                MessageBox.Show(
+                    "Your logged-in account could not be identified.\n\n" +
+                    "Please return to the Main Menu and open this form again.",
+                    "Account Required",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
+                return;
+            }
+
+            if (currentUser.AccountType != "Citizen")
+            {
+                MessageBox.Show(
+                    "Only citizen accounts can submit municipal issues.",
+                    "Access Restricted",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
+                return;
+            }
+
             string location =
                 txtLocation.Text.Trim();
 
@@ -122,9 +178,11 @@ namespace MunicipalServicesApp
             string description =
                 txtDescription.Text.Trim();
 
+
             // --------------------------------------
             // VALIDATE LOCATION
             // --------------------------------------
+
             if (location == "")
             {
                 MessageBox.Show(
@@ -135,13 +193,14 @@ namespace MunicipalServicesApp
                 );
 
                 txtLocation.Focus();
-
                 return;
             }
+
 
             // --------------------------------------
             // VALIDATE CATEGORY
             // --------------------------------------
+
             if (category == "")
             {
                 MessageBox.Show(
@@ -152,13 +211,14 @@ namespace MunicipalServicesApp
                 );
 
                 cmbCategory.Focus();
-
                 return;
             }
+
 
             // --------------------------------------
             // VALIDATE DESCRIPTION
             // --------------------------------------
+
             if (description == "")
             {
                 MessageBox.Show(
@@ -169,13 +229,14 @@ namespace MunicipalServicesApp
                 );
 
                 txtDescription.Focus();
-
                 return;
             }
+
 
             // --------------------------------------
             // DESCRIPTION LENGTH
             // --------------------------------------
+
             if (description.Length < 10)
             {
                 MessageBox.Show(
@@ -187,62 +248,83 @@ namespace MunicipalServicesApp
                 );
 
                 txtDescription.Focus();
-
                 return;
             }
 
-            // --------------------------------------
-            // CREATE ISSUE OBJECT
-            // --------------------------------------
+
+            // ======================================
+            // CREATE SERVICE REQUEST
+            // ======================================
+
             Issue newIssue = new Issue
             {
                 Location = location,
+
                 Category = category,
+
                 Description = description,
-                Attachment = selectedAttachment
+
+                Attachment = selectedAttachment,
+
+                // Link request to logged-in citizen.
+                AccountId = currentUser.Id,
+
+                // Initial request status.
+                Status = "Received",
+
+                // Default priority: Medium.
+                Priority = 3,
+
+                // Department can be assigned later.
+                Department = null,
+
+                DateReported = DateTime.Now,
+
+                LastUpdated = DateTime.Now
             };
+
 
             // ======================================
             // SAVE TO DATABASE
             // ======================================
-            bool success =
-                IssueStore.AddIssue(newIssue);
 
-            // ======================================
-            // DATABASE SAVE SUCCESSFUL
-            // ======================================
-            if (success)
+            try
             {
-                // Also keep it in the local list.
-                reportedIssues.Add(newIssue);
+                bool success =
+                    IssueStore.AddIssue(newIssue);
 
-                progressBar.Value = 100;
+                if (success)
+                {
+                    reportedIssues.Add(newIssue);
 
-                lblProgressMessage.Text =
-                    "Issue submitted successfully! " +
-                    "Thank you for helping your community.";
+                    progressBar.Value = 100;
 
-                MessageBox.Show(
-                    "Your issue has been submitted successfully!\n\n" +
-                    "Issue ID: " + newIssue.Id + "\n" +
-                    "Category: " + category + "\n" +
-                    "Location: " + location + "\n\n" +
-                    "Thank you for helping improve your community.",
-                    "Issue Submitted",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
-                );
+                    lblProgressMessage.Text =
+                        "Service request submitted successfully!";
 
-                ClearForm();
+                    MessageBox.Show(
+                        "Your municipal service request has been submitted successfully!\n\n" +
+                        "Reference Number: " +
+                        newIssue.RequestReference + "\n" +
+                        "Issue ID: " + newIssue.Id + "\n" +
+                        "Category: " + category + "\n" +
+                        "Location: " + location + "\n" +
+                        "Status: " + newIssue.Status + "\n" +
+                        "Priority: " + newIssue.PriorityName + "\n\n" +
+                        "Please keep your reference number to track your request.",
+                        "Request Submitted",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+
+                    ClearForm();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // ==================================
-                // DATABASE SAVE FAILED
-                // ==================================
                 MessageBox.Show(
-                    "The issue could not be saved to the database.\n\n" +
-                    "Please check your database connection and try again.",
+                    "The service request could not be saved.\n\n" +
+                    ex.Message,
                     "Submission Failed",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
@@ -250,9 +332,11 @@ namespace MunicipalServicesApp
             }
         }
 
+
         // ==========================================
         // CLEAR BUTTON
         // ==========================================
+
         private void btnClear_Click(
             object sender,
             EventArgs e)
@@ -271,9 +355,11 @@ namespace MunicipalServicesApp
             }
         }
 
+
         // ==========================================
         // BACK BUTTON
         // ==========================================
+
         private void btnBack_Click(
             object sender,
             EventArgs e)
@@ -293,9 +379,11 @@ namespace MunicipalServicesApp
             }
         }
 
+
         // ==========================================
         // CLEAR FORM
         // ==========================================
+
         private void ClearForm()
         {
             txtLocation.Clear();
@@ -319,9 +407,11 @@ namespace MunicipalServicesApp
             txtLocation.Focus();
         }
 
+
         // ==========================================
         // UPDATE PROGRESS
         // ==========================================
+
         private void UpdateProgress()
         {
             int progress = 0;
@@ -383,10 +473,19 @@ namespace MunicipalServicesApp
             }
         }
 
+
         // ==========================================
         // HEADER PAINT
         // ==========================================
+
         private void pnlHeader_Paint(
+            object sender,
+            PaintEventArgs e)
+        {
+
+        }
+
+        private void pnlScroll_Paint(
             object sender,
             PaintEventArgs e)
         {
