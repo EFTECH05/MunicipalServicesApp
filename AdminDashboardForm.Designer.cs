@@ -19,7 +19,6 @@
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AdminDashboardForm));
             this.pnlScroll = new System.Windows.Forms.Panel();
             this.pnlMain = new System.Windows.Forms.Panel();
             this.lblFooter = new System.Windows.Forms.Label();
@@ -78,6 +77,7 @@
             this.pnlScroll.Name = "pnlScroll";
             this.pnlScroll.Size = new System.Drawing.Size(920, 749);
             this.pnlScroll.TabIndex = 0;
+            this.pnlScroll.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlScroll_Paint);
             // 
             // pnlMain
             // 
@@ -459,6 +459,7 @@
             this.pnlHeader.Name = "pnlHeader";
             this.pnlHeader.Size = new System.Drawing.Size(800, 170);
             this.pnlHeader.TabIndex = 0;
+            this.pnlHeader.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlHeader_Paint);
             // 
             // pnlSouthAfricanAccent
             // 
@@ -472,7 +473,6 @@
             // 
             this.picLogo.BackColor = System.Drawing.Color.White;
             this.picLogo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.picLogo.Image = ((System.Drawing.Image)(resources.GetObject("picLogo.Image")));
             this.picLogo.Location = new System.Drawing.Point(12, 13);
             this.picLogo.Name = "picLogo";
             this.picLogo.Size = new System.Drawing.Size(134, 134);

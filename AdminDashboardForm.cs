@@ -7,6 +7,12 @@ namespace MunicipalServicesApp
 {
     public partial class AdminDashboardForm : Form
     {
+        private Account currentUser;
+
+        // ==========================================
+        // DEFAULT CONSTRUCTOR
+        // ==========================================
+
         public AdminDashboardForm()
         {
             InitializeComponent();
@@ -23,20 +29,46 @@ namespace MunicipalServicesApp
             AddCreateEventCard();
         }
 
-        private void AdminDashboardForm_Load(object sender, EventArgs e)
+        // ==========================================
+        // CONSTRUCTOR WITH ADMIN ACCOUNT
+        // ==========================================
+
+        public AdminDashboardForm(Account account)
+            : this()
+        {
+            currentUser = account;
+        }
+
+        // ==========================================
+        // FORM LOAD
+        // ==========================================
+
+        private void AdminDashboardForm_Load(
+            object sender, EventArgs e)
         {
             lblWelcome.Text = "Welcome, Municipal Administrator";
         }
 
-        private void btnViewIssues_Click(object sender, EventArgs e)
+        // ==========================================
+        // VIEW ISSUES
+        // ==========================================
+
+        private void btnViewIssues_Click(
+            object sender, EventArgs e)
         {
-            using (ViewIssuesForm viewIssuesForm = new ViewIssuesForm())
+            using (ViewIssuesForm viewIssuesForm =
+                new ViewIssuesForm())
             {
                 viewIssuesForm.ShowDialog(this);
             }
         }
 
-        private void btnManageIssues_Click(object sender, EventArgs e)
+        // ==========================================
+        // MANAGE ISSUES
+        // ==========================================
+
+        private void btnManageIssues_Click(
+            object sender, EventArgs e)
         {
             MessageBox.Show(
                 "The Manage Issues section allows administrators " +
@@ -48,17 +80,58 @@ namespace MunicipalServicesApp
             );
         }
 
-        private void btnUpdateStatus_Click(object sender, EventArgs e)
+        // ==========================================
+        // UPDATE SERVICE REQUEST STATUS
+        // ==========================================
+
+        private void btnUpdateStatus_Click(
+            object sender, EventArgs e)
         {
-            MessageBox.Show(
-                "Issue status updates are not available yet.",
-                "Update Issue Status",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
+            if (currentUser == null)
+            {
+                MessageBox.Show(
+                    "Administrator account information could not be loaded.",
+                    "Update Status",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
+                return;
+            }
+
+            if (!string.Equals(
+                    currentUser.AccountType,
+                    "Admin",
+                    StringComparison.OrdinalIgnoreCase)
+                &&
+                !string.Equals(
+                    currentUser.AccountType,
+                    "SuperAdmin",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show(
+                    "Only administrators can update service requests.",
+                    "Access Denied",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
+                return;
+            }
+
+            using (ServiceRequestStatusForm statusForm =
+                new ServiceRequestStatusForm(currentUser))
+            {
+                statusForm.ShowDialog(this);
+            }
         }
 
-        private void btnViewCitizens_Click(object sender, EventArgs e)
+        // ==========================================
+        // VIEW CITIZENS
+        // ==========================================
+
+        private void btnViewCitizens_Click(
+            object sender, EventArgs e)
         {
             MessageBox.Show(
                 "The Citizens section will display registered citizen accounts.",
@@ -67,6 +140,10 @@ namespace MunicipalServicesApp
                 MessageBoxIcon.Information
             );
         }
+
+        // ==========================================
+        // CREATE EVENT CARD
+        // ==========================================
 
         private void AddCreateEventCard()
         {
@@ -166,23 +243,40 @@ namespace MunicipalServicesApp
             pnlMain.Controls.Add(pnlCreateEvent);
         }
 
-        private void btnCreateEvent_Click(object sender, EventArgs e)
+        // ==========================================
+        // CREATE EVENT
+        // ==========================================
+
+        private void btnCreateEvent_Click(
+            object sender, EventArgs e)
         {
-            using (CreateEventForm createEventForm = new CreateEventForm())
+            using (CreateEventForm createEventForm =
+                new CreateEventForm())
             {
                 createEventForm.ShowDialog(this);
             }
         }
 
-        private void btnViewEvents_Click(object sender, EventArgs e)
+        // ==========================================
+        // VIEW EVENTS
+        // ==========================================
+
+        private void btnViewEvents_Click(
+            object sender, EventArgs e)
         {
-            using (LocalEventsForm localEventsForm = new LocalEventsForm())
+            using (LocalEventsForm localEventsForm =
+                new LocalEventsForm())
             {
                 localEventsForm.ShowDialog(this);
             }
         }
 
-        private void btnLogout_Click(object sender, EventArgs e)
+        // ==========================================
+        // LOGOUT
+        // ==========================================
+
+        private void btnLogout_Click(
+            object sender, EventArgs e)
         {
             DialogResult result = MessageBox.Show(
                 "Are you sure you want to log out?",
@@ -199,7 +293,22 @@ namespace MunicipalServicesApp
             }
         }
 
-        private void pnlMain_Paint(object sender, PaintEventArgs e)
+        // ==========================================
+        // PANEL EVENTS
+        // ==========================================
+
+        private void pnlMain_Paint(
+            object sender, PaintEventArgs e)
+        {
+        }
+
+        private void pnlHeader_Paint(
+            object sender, PaintEventArgs e)
+        {
+        }
+
+        private void pnlScroll_Paint(
+            object sender, PaintEventArgs e)
         {
         }
     }
