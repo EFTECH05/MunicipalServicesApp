@@ -551,9 +551,269 @@ Restart the application and confirm that saved event changes remain in the datab
 
 Verify that email notifications work when SMTP settings are configured.
 
-11. Future Development
+Municipal Services Application – Part 3
+# 🇿🇦 Municipal Services Application – Part 3
 
-I will continue developing the Municipal Services Application in the later stages of the project. Planned work includes the Service Request Status feature and additional functionality required for the final project.
+## Advanced Application Development (AAPD7112)
+
+**Portfolio of Evidence – Task 3: Final Implementation**
+
+A C# Windows Forms desktop application developed to improve municipal service management in South Africa. This final stage focuses on service request tracking, advanced data structures, algorithms, database integration and application testing.
+
+---
+
+## 👨‍💻 Developer Information
+
+| Detail | Information |
+|---|---|
+| Developer | Franklin Ngangu Simbi |
+| Institution | Rosebank College – The IIE |
+| Qualification | Advanced Diploma in Application Development |
+| Module | Advanced Application Development |
+| Module Code | AAPD7112 |
+| Project | Municipal Services Application |
+| POE Section | Part 3 – Final Implementation |
+
+---
+
+## 📌 Project Overview
+
+The Municipal Services Application is a Windows desktop application developed using C# and Windows Forms.
+
+The purpose of this project is to help manage municipal services and make it easier to organise and track service-related information.
+
+Part 3 focuses on the final implementation of the application by introducing advanced data structures and algorithms to improve how information is organised, searched, prioritised and managed.
+
+The application builds on the previous development stages, including reporting municipal issues and managing local events.
+
+---
+
+## 🎥 Application Demonstration
+
+Watch the full demonstration of the Municipal Services Application:
+
+[![Municipal Services Application Demo](https://img.youtube.com/vi/LgZvm3tG780/maxresdefault.jpg)](https://youtu.be/LgZvm3tG780)
+
+▶️ **[Watch the Municipal Services Application Demo on YouTube](https://youtu.be/LgZvm3tG780)**
+
+The video demonstrates the desktop application and its features.
+
+---
+
+## 🚀 Main Features
+
+### 1. Municipal Service Request Management
+
+- Create and manage municipal service requests.
+- Track service request information.
+- Generate unique service request reference numbers.
+- Manage request statuses.
+- Assign priorities to service requests.
+- Record service request history.
+- Support municipal service request management.
+
+### 2. Priority Management
+
+The application uses a Min-Heap to organise service requests according to priority.
+
+This allows higher-priority requests to be retrieved before lower-priority requests.
+
+### 3. Service Request History
+
+The application supports tracking changes made to service requests.
+
+This helps maintain information about request progress and status updates.
+
+### 4. Municipal Event Management
+
+- Create and manage municipal events.
+- Store event information.
+- Organise upcoming municipal activities.
+- Manage event-related information.
+
+---
+
+## 🌳 Advanced Data Structures and Algorithms
+
+One of the main requirements of Part 3 is the implementation of advanced data structures and algorithms.
+
+The project includes the following:
+
+| Data Structure / Algorithm | Description |
+|---|---|
+| Trees | Organise information using connected nodes. |
+| Binary Trees | Allow each node to have up to two children. |
+| Binary Search Trees | Organise values to support searching. |
+| AVL Trees | Maintain balance during insertion and deletion. |
+| Red-Black Trees | Use colour rules to maintain balance. |
+| Min-Heap | Organise information according to priority. |
+| Graphs | Represent connections between municipal departments. |
+| Breadth-First Search (BFS) | Visits connected nodes level by level. |
+| Depth-First Search (DFS) | Explores graph connections before backtracking. |
+| Minimum Spanning Tree (MST) | Finds a minimum-cost connection between connected points. |
+
+These implementations demonstrate how different data structures and algorithms can solve practical programming problems.
+
+---
+
+## 🛠️ Technologies Used
+
+| Technology | Purpose |
+|---|---|
+| C# | Main programming language |
+| Windows Forms | Desktop graphical user interface |
+| .NET Framework 4.7.2 | Application development |
+| Microsoft SQL Server Express | Database management |
+| ADO.NET | Database connectivity |
+| Microsoft Azure SQL Database | Cloud database hosting |
+| Visual Studio | Development environment |
+| Git | Version control |
+| GitHub | Source-code hosting |
+
+---
+
+## 🗄️ Database Implementation
+
+The application uses Microsoft SQL Server for database management.
+
+ADO.NET is used to connect the C# application to the database and perform database operations.
+
+The database stores application information and supports the management of municipal service requests and other records.
+
+The project also includes work on migrating the Municipal Services database to Microsoft Azure SQL Database.
+
+### Database Features
+
+- Store municipal service request information.
+- Retrieve and manage application records.
+- Track service request statuses.
+- Store service request history.
+- Support database operations through SQL Server.
+
+---
+
+## ☁️ Microsoft Azure Integration
+
+Microsoft Azure was used to explore cloud database hosting.
+<img width="1365" height="726" alt="image" src="https://github.com/user-attachments/assets/b32734b5-fa48-4227-a3ee-9bae78d505ec" />
+
+The Municipal Services database was migrated to Azure SQL Database.
+
+This demonstrates how a desktop application can connect to a database hosted in the cloud rather than relying only on a local database server.
+
+---
+
+## 🧪 Testing and Quality Assurance
+
+Testing was performed to verify the functionality of the application and identify possible errors.
+
+The testing process included:
+<img width="1073" height="307" alt="TEST12" src="https://github.com/user-attachments/assets/d7c7c94f-696b-480f-bd7d-ce4328e42d0f" />
+<img width="1361" height="480" alt="paspasds2" src="https://github.com/user-attachments/assets/e99f94bf-3606-4741-a64c-117322be60e7" />
+
+- Unit testing.
+- Application build verification.
+- Database connectivity checks.
+- Service request functionality testing.
+- Data structure testing.
+- Heap and priority management testing.
+- Graph operations and algorithm testing.
+
+Testing helped improve the reliability and quality of the final application.
+
+---
+
+## ⚙️ Installation and Setup
+
+### Requirements
+
+- Windows operating system.
+- Microsoft Visual Studio.
+- .NET Framework 4.7.2 development support.
+- Microsoft SQL Server Express or access to the configured Azure SQL Database.
+- Git (optional).
+
+### Installation Steps
+
+**1. Clone the repository**
+
+```bash
+git clone YOUR_GITHUB_REPOSITORY_URL
+```
+
+**2. Open the project**
+
+Open the solution file (`.sln`) using Microsoft Visual Studio.
+
+**3. Configure the database**
+
+Configure the database connection string according to your SQL Server environment.
+
+**4. Restore dependencies**
+
+Allow Visual Studio to restore the required NuGet packages.
+
+**5. Build the application**
+
+In Visual Studio, select:
+
+`Build → Build Solution`
+
+**6. Run the application**
+
+Press `F5` or click Start in Visual Studio.
+
+---
+
+
+## 🎯 Learning Outcomes
+
+Through this project, I gained practical experience in:
+
+- Developing desktop applications using C# Windows Forms.
+- Connecting applications to Microsoft SQL Server.
+- Using ADO.NET for database operations.
+- Implementing advanced data structures.
+- Working with Binary Search Trees, AVL Trees and Red-Black Trees.
+- Using Heaps for priority management.
+- Implementing graph traversal algorithms.
+- Understanding Minimum Spanning Trees.
+- Performing unit testing and debugging.
+- Working with Microsoft Azure SQL Database.
+- Managing source code using Git and GitHub.
+
+---
+
+## 📚 Academic Information
+
+**Institution:** Rosebank College – The IIE
+
+**Qualification:** Advanced Diploma in Application Development
+
+**Module:** Advanced Application Development
+
+**Module Code:** AAPD7112
+
+**Assessment:** Portfolio of Evidence – Part 3
+
+**Project:** Municipal Services Application for South Africa
+
+---
+
+## 👨‍💻 Author
+
+**Franklin Ngangu Simbi**
+
+- GitHub: [EFTECH05](https://github.com/EFTECH05)
+- Portfolio: [Franklin Ngangu Portfolio](https://eftech05.github.io/franklin-portfolio/)
+
+---
+
+## 📄 License
+
+This project was developed for academic purposes as part of the Advanced Application Development (AAPD7112) Portfolio of Evidence.
+
+
 
 12. Repository
 
